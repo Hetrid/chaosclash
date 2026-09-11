@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>LEGEND PARTY v3</title>
+<style>
+:root{
+  --bg:#090b13;--panel:#121726;--panel2:#171d31;--text:#f7f8ff;--muted:#8892aa;
+  --cyan:#5ee7ff;--pink:#ff4d8d;--gold:#ffd166;--green:#67f5a3;--red:#ff5d6c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:Inter,system-ui,Arial,sans-serif;color:var(--text)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+#game{position:fixed;inset:0;width:100%;height:100%;display:none;background:#070911;touch-action:none}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;
+background:radial-gradient(circle at 50% 20%,#18213b 0%,#0b0e18 45%,#070911 100%);z-index:20}
+.card{width:min(980px,96vw);max-height:92vh;overflow:auto;background:rgba(18,23,38,.95);
+border:1px solid rgba(255,255,255,.09);border-radius:24px;padding:22px;box-shadow:0 28px 80px rgba(0,0,0,.5)}
+h1{margin:0;font-size:clamp(34px,7vw,72px);letter-spacing:-.05em;text-align:center}
+.logoGrad{background:linear-gradient(120deg,var(--cyan),#a78bfa,var(--pink),var(--gold));-webkit-background-clip:text;color:transparent}
+.sub{text-align:center;color:var(--muted);margin:6px 0 22px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+input,select{background:#0c1120;color:#fff;border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:12px 14px;outline:none}
+input:focus,select:focus{border-color:var(--cyan)}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:800;color:#081018;background:var(--cyan)}
+.btn.alt{background:#222943;color:#fff}.btn.pink{background:var(--pink);color:#fff}.btn.gold{background:var(--gold);color:#15110a}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.modeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.mode{background:linear-gradient(180deg,#171f36,#101524);border:1px solid rgba(255,255,255,.08);padding:16px;border-radius:18px;position:relative;overflow:hidden}
+.mode.sel{outline:2px solid var(--cyan);box-shadow:0 0 0 5px rgba(94,231,255,.08)}
+.mode h3{margin:0 0 4px}.mode p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
+.badge{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:900;background:#26304e;color:#dfe7ff;margin-top:10px}
+#lobbyPlayers{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:14px 0}
+.playerCard{padding:10px 12px;border-radius:14px;background:#0d1322;border:1px solid rgba(255,255,255,.07);display:flex;justify-content:space-between;gap:10px;align-items:center}
+.ready{color:var(--green);font-weight:900}.wait{color:var(--muted)}
+.kbd{padding:2px 6px;border-radius:6px;background:#202944;border:1px solid #344061;color:#fff;font-size:11px}
+#hud{display:none;position:fixed;inset:0;z-index:10;pointer-events:none}
+#topHud{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(8,11,20,.76);backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:8px 14px;display:flex;gap:16px;align-items:center}
+#roundText{font-weight:900}#modeText{color:var(--cyan);font-weight:800}
+#toast{position:absolute;top:22%;left:50%;transform:translate(-50%,-50%);font-size:clamp(34px,8vw,86px);font-weight:1000;letter-spacing:-.05em;text-align:center;text-shadow:0 8px 30px #000;opacity:0;transition:.18s}
+#toast.on{opacity:1;transform:translate(-50%,-50%) scale(1.06)}
+#help{position:absolute;bottom:12px;left:12px;background:rgba(8,11,20,.68);border-radius:12px;padding:9px 11px;color:#bac3d8;font-size:12px}
+#mobile{display:none;position:fixed;inset:0;z-index:12;pointer-events:none}
+.joy{position:absolute;width:128px;height:128px;border-radius:50%;border:2px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);pointer-events:auto;touch-action:none}
+.knob{position:absolute;width:54px;height:54px;border-radius:50%;left:37px;top:37px;background:rgba(94,231,255,.8);box-shadow:0 0 25px rgba(94,231,255,.28)}
+#moveJoy{left:22px;bottom:28px}
+.act{position:absolute;border:2px solid rgba(255,255,255,.2);border-radius:50%;color:#fff;font-weight:1000;pointer-events:auto;touch-action:none}
+#dashBtn{right:32px;bottom:48px;width:84px;height:84px;background:linear-gradient(135deg,#ff4d8d,#ff7b54)}
+#brakeBtn{right:124px;bottom:132px;width:62px;height:62px;background:#28304b;font-size:11px}
+#statusDot{position:fixed;left:10px;top:10px;z-index:100;width:9px;height:9px;border-radius:50%;background:#f66}
+#connPill{position:fixed;left:26px;top:7px;z-index:100;padding:4px 8px;border-radius:999px;background:rgba(8,11,20,.78);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:900;color:#aab4c9}
+#notice{max-width:720px;margin:12px auto 0;padding:10px 12px;border-radius:12px;display:none;text-align:center;font-size:13px;font-weight:700}
+#notice.err{display:block;background:rgba(255,93,108,.12);border:1px solid rgba(255,93,108,.38);color:#ffabb4}
+#notice.ok{display:block;background:rgba(103,245,163,.1);border:1px solid rgba(103,245,163,.3);color:#9ff9c3}
+.roomTools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.miniBtn{border:1px solid rgba(255,255,255,.12);background:#182039;color:#fff;border-radius:10px;padding:7px 10px;font-size:11px;font-weight:900;cursor:pointer}
+.scoreStrip{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.scoreChip{padding:5px 9px;border-radius:999px;background:#0d1322;border:1px solid rgba(255,255,255,.07);font-size:11px;font-weight:800}
+.btn.busy{position:relative;pointer-events:none;opacity:.72}
+.btn.busy::after{content:'';display:inline-block;width:12px;height:12px;margin-left:8px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:currentColor;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:700px){
+ .card{padding:16px}.row{gap:7px}.btn,input,select{width:100%}
+ #help{display:none}
+ #mobile{display:block}
+}
+</style>
+</head>
+<body>
+<div id="statusDot" title="Firebase status"></div><div id="connPill">CONNECTING…</div>
+<canvas id="game"></canvas>
+
+<div id="home" class="screen">
+ <div class="card">
+  <h1 class="logoGrad">LEGEND PARTY</h1>
+  <div class="sub">Physics chaos · knockback · hazards · multiplayer party rounds · v3 sync fix</div><div style="text-align:center;font-size:11px;color:#67728d;margin:-12px 0 14px">Firebase must show <b style="color:#67f5a3">ONLINE</b> before creating/joining.</div>
+  <div class="row">
+    <input id="nameInput" maxlength="14" placeholder="Player name" value="Player">
+    <button class="btn" id="createBtn" disabled>CREATE PARTY</button>
+    <input id="codeInput" maxlength="6" placeholder="ROOM CODE" style="text-transform:uppercase;max-width:180px">
+    <button class="btn alt" id="joinBtn" disabled>JOIN</button>
+  </div>
+  <div class="modeGrid">
+   <div class="mode sel" data-mode="bumper"><h3>💥 Bumper Bash</h3><p>Dash into rivals and launch them off the arena. Last player standing wins.</p><span class="badge">CORE MODE</span></div>
+   <div class="mode" data-mode="spinner"><h3>🌀 Spinner Pit</h3><p>Same physics combat, but a rotating hazard beam gets faster as the round continues.</p><span class="badge">HAZARD</span></div>
+   <div class="mode" data-mode="chaos"><h3>⚡ Chaos Floor</h3><p>Random shock pads erupt from the floor and add unpredictable knockback.</p><span class="badge">PARTY</span></div>
+  </div>
+  <div id="notice"></div><p class="sub" style="margin-top:18px">Desktop: WASD/Arrows · Space = Dash · Shift = Brake. Mobile controls appear automatically.</p>
+ </div>
+</div>
+
+<div id="lobby" class="screen" style="display:none">
+ <div class="card">
+  <div class="row" style="justify-content:space-between">
+    <div><div style="color:var(--muted);font-size:12px">ROOM</div>
+<div class="roomTools"><div id="roomCode" style="font-size:30px;font-weight:1000;letter-spacing:.18em">------</div><button id="copyCodeBtn" class="miniBtn">COPY</button></div></div>
+    <div><div style="color:var(--muted);font-size:12px">MODE</div><div id="lobbyMode" style="font-size:20px;font-weight:900;color:var(--cyan)">BUMPER BASH</div></div>
+  </div>
+  <div id="lobbyPlayers"></div><div id="scoreStrip" class="scoreStrip"></div>
+  <div class="row">
+    <button class="btn alt" id="readyBtn">READY</button>
+    <select id="modeSelect" style="max-width:220px">
+      <option value="bumper">Bumper Bash</option>
+      <option value="spinner">Spinner Pit</option>
+      <option value="chaos">Chaos Floor</option>
+    </select>
+    <select id="roundsSelect" style="max-width:190px">
+      <option value="3">First to 3 wins</option>
+      <option value="5">First to 5 wins</option>
+      <option value="7">First to 7 wins</option>
+    </select>
+    <button class="btn pink" id="startBtn">START</button>
+    <button class="btn alt" id="leaveBtn">LEAVE</button>
+  </div>
+  <div class="sub" id="lobbyHint" style="margin-top:12px"></div>
+ </div>
+</div>
+
+<div id="hud">
+ <div id="topHud">
+   <span id="roundText">ROUND 1</span>
+   <span id="modeText">BUMPER BASH</span>
+   <span id="aliveText">0 ALIVE</span>
+ </div>
+ <div id="toast"></div>
+ <div id="help"><b>WASD</b> move · <b>SPACE</b> dash · <b>SHIFT</b> brake</div>
+</div>
+
+<div id="mobile">
+ <div id="moveJoy" class="joy"><div id="moveKnob" class="knob"></div></div>
+ <button id="dashBtn" class="act">DASH</button>
+ <button id="brakeBtn" class="act">BRAKE</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+ getDatabase, ref, set, get, update, remove, push, onValue, onChildAdded, onDisconnect, serverTimestamp, runTransaction
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+const firebaseConfig = {
+ apiKey: "AIzaSyALcoZiEYQpbZg-wFFDp7txBGGJj7PyORk",
+ authDomain: "legendarena.firebaseapp.com",
+ databaseURL: "https://legendarena-default-rtdb.firebaseio.com",
+ projectId: "legendarena",
+ storageBucket: "legendarena.firebasestorage.app",
+ messagingSenderId: "582853711434",
+ appId: "1:582853711434:web:28d7be78a1168551cf38b3",
+ measurementId: "G-7FRDPD2H23"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app), db=getDatabase(app);
+const $=id=>document.getElementById(id);
+const MOBILE=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+if(!MOBILE)$('mobile').style.display='none';
+
+const W=1800,H=1100,CX=W/2,CY=H/2,ARENA_R=455;
+let uid=null,room=null,isHost=false,roomData=null,inGame=false,round=1,mode='bumper',targetWins=3;
+let rem={},eventsUnsub=null,stateUnsub=null,roomUnsub=null,lastSync=0,lastT=performance.now(),spinnerA=0,shockPads=[],roundStart=0,roundLocked=true,roundResolving=false,loopToken=0;
+let launchPending=false, launchPreparing=false, launchCommitBusy=false, launchTimeout=null, activeLaunchId=null;
+let me={x:CX,y:CY,vx:0,vy:0,r:24,alive:true,score:0,name:'Player',dashCd:0,brake:false,color:'#5ee7ff'};
+const keys={}, joy={x:0,y:0,id:null}, hitGate=new Map();
+
+const cvs=$('game'),ctx=cvs.getContext('2d');
+function resize(){
+ const dpr=Math.min(devicePixelRatio||1,MOBILE?1.15:1.5);
+ cvs.width=innerWidth*dpr;cvs.height=innerHeight*dpr;cvs.style.width=innerWidth+'px';cvs.style.height=innerHeight+'px';
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener('resize',resize);resize();
+
+function colorFor(id){
+ let h=0;for(let i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))|0;
+ const cols=['#5ee7ff','#ff4d8d','#ffd166','#67f5a3','#a78bfa','#ff8c42','#6ee7b7','#fb7185'];
+ return cols[Math.abs(h)%cols.length];
+}
+function code(){return Math.random().toString(36).slice(2,8).toUpperCase()}
+function safeName(){return (($('nameInput').value||'Player').trim().slice(0,14)||'Player')}
+function roomPath(s=''){return `partyRooms/${room}${s?'/'+s:''}`}
+function toast(t,d=1200){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),d)}
+function setScreen(which){$('home').style.display=which==='home'?'flex':'none';$('lobby').style.display=which==='lobby'?'flex':'none'}
+function status(ok,label){
+ $('statusDot').style.background=ok?'#67f5a3':'#ff5d6c';
+ $('connPill').textContent=label||(ok?'ONLINE':'OFFLINE');
+}
+function notice(msg,type='err'){
+ const e=$('notice');e.textContent=msg||'';e.className=msg?type:'';e.style.display=msg?'block':'none';
+}
+function busy(btn,on,label){
+ btn.classList.toggle('busy',!!on);btn.disabled=!!on||!uid;if(label)btn.dataset.base=label;
+ const base=btn.dataset.base||btn.textContent.replace(/…/g,'').trim();
+ btn.textContent=on?(base+'…'):base;
+}
+function friendlyError(err,action='Firebase'){
+ console.error(action,err);
+ const code=err?.code||'';
+ if(code.includes('permission-denied'))return `${action} was blocked by Firebase rules. Publish the v2 database.rules.json included with this build.`;
+ if(code.includes('auth'))return `${action} failed because Firebase Authentication is not ready. Make sure Anonymous Authentication is enabled.`;
+ return `${action} failed${err?.message?`: ${err.message}`:''}`;
+}
+
+$('nameInput').value=localStorage.getItem('legendPartyName')||$('nameInput').value;
+$('nameInput').addEventListener('input',()=>localStorage.setItem('legendPartyName',safeName()));
+status(false,'CONNECTING…');
+signInAnonymously(auth).catch(err=>{status(false,'AUTH ERROR');notice(friendlyError(err,'Sign-in'));});
+onAuthStateChanged(auth,async u=>{
+ if(!u)return;
+ uid=u.uid;status(true,'ONLINE');
+ $('createBtn').disabled=false;$('joinBtn').disabled=false;
+ notice('');
+ try{
+   const pr=ref(db,`presence/${uid}`);
+   await onDisconnect(pr).remove();
+   await set(pr,{online:true,updatedAt:serverTimestamp()});
+ }catch(err){notice(friendlyError(err,'Presence')); }
+});
+
+document.querySelectorAll('.mode').forEach(el=>el.onclick=()=>{
+ document.querySelectorAll('.mode').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');mode=el.dataset.mode;
+ $('modeSelect').value=mode;
+});
+
+$('createBtn').onclick=async()=>{
+ if(!uid){notice('Still connecting to Firebase. Wait until the top-left indicator says ONLINE.');return}
+ const btn=$('createBtn');btn.dataset.base='CREATE PARTY';busy(btn,true);notice('');
+ try{
+   me.name=safeName();mode=document.querySelector('.mode.sel')?.dataset.mode||'bumper';
+   let tries=0, exists=true;
+   while(exists&&tries++<8){
+     room=code();
+     const s=await get(ref(db,`partyRooms/${room}/meta`));
+     exists=s.exists();
+   }
+   if(exists)throw new Error('Could not generate a free room code.');
+   // Deliberately write permitted child paths separately. This also works with stricter rules.
+   await set(ref(db,roomPath('meta')),{host:uid,status:'lobby',mode,targetWins:3,round:1,createdAt:serverTimestamp()});
+   await set(ref(db,roomPath(`players/${uid}`)),{name:me.name,ready:true,score:0,color:colorFor(uid),joinedAt:serverTimestamp()});
+   enterLobby();
+ }catch(err){
+   notice(friendlyError(err,'Create Party'));
+   // Clean up a half-created room if possible.
+   try{if(room)await remove(ref(db,`partyRooms/${room}`))}catch(_){}
+   room=null;
+ }finally{busy(btn,false)}
+};
+$('joinBtn').onclick=async()=>{
+ if(!uid){notice('Still connecting to Firebase.');return}
+ const btn=$('joinBtn');btn.dataset.base='JOIN';busy(btn,true);notice('');
+ try{
+   room=($('codeInput').value||'').trim().toUpperCase(); if(!room)throw new Error('Enter a room code.');
+   const s=await get(ref(db,roomPath()));
+   if(!s.exists())throw new Error('Room not found.');
+   const d=s.val(); if(d.meta?.status!=='lobby')throw new Error('This party has already started.');
+   if(Object.keys(d.players||{}).length>=8)throw new Error('Party is full (8/8).');
+   me.name=safeName();
+   await set(ref(db,roomPath(`players/${uid}`)),{name:me.name,ready:false,score:0,color:colorFor(uid),joinedAt:serverTimestamp()});
+   enterLobby();
+ }catch(err){notice(err?.code?friendlyError(err,'Join Party'):String(err.message||err))}
+ finally{busy(btn,false)}
+};
+$('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('joinBtn').disabled)$('joinBtn').click()});
+async function acknowledgeLaunch(){
+ if(!roomData?.meta||roomData.meta.status!=='starting'||!uid||launchPreparing)return;
+ const launchId=roomData.meta.launchId;
+ if(!launchId)return;
+ const st=roomData.state?.[uid];
+ if(!st||!Number.isFinite(st.x)||!Number.isFinite(st.y)){
+   notice('Match launch is syncing your spawn…','ok');
+   return;
+ }
+ launchPreparing=true;
+ try{
+   activeLaunchId=launchId;
+   await update(ref(db,roomPath(`players/${uid}`)),{loadedLaunch:launchId});
+   notice('Loaded. Waiting for the other players…','ok');
+ }catch(err){notice(friendlyError(err,'Launch acknowledgement'))}
+ finally{launchPreparing=false}
+}
+async function maybeCommitLaunch(){
+ if(!isHost||launchCommitBusy||roomData?.meta?.status!=='starting')return;
+ const launchId=roomData.meta.launchId;if(!launchId)return;
+ const p=roomData.players||{},ids=Object.keys(p);
+ if(ids.length<2){
+   launchCommitBusy=true;
+   try{await update(ref(db,roomPath('meta')),{status:'lobby',launchId:null,roundAt:null});}
+   finally{launchCommitBusy=false}
+   return;
+ }
+ const loaded=ids.filter(id=>p[id]?.loadedLaunch===launchId);
+ $('lobbyHint').textContent=`Loading players ${loaded.length}/${ids.length}…`;
+ if(loaded.length!==ids.length)return;
+ launchCommitBusy=true;
+ try{
+   const startAt=Date.now()+2400;
+   await update(ref(db,roomPath('meta')),{status:'playing',roundAt:startAt});
+ }catch(err){notice(friendlyError(err,'Launch commit'))}
+ finally{launchCommitBusy=false}
+}
+function armLaunchTimeout(launchId){
+ clearTimeout(launchTimeout);
+ launchTimeout=setTimeout(async()=>{
+   if(!isHost||!room||roomData?.meta?.status!=='starting'||roomData?.meta?.launchId!==launchId)return;
+   try{
+     const snap=await get(ref(db,roomPath()));const d=snap.val()||{};
+     const p=d.players||{},ids=Object.keys(p),loaded=ids.filter(id=>p[id]?.loadedLaunch===launchId);
+     if(loaded.length!==ids.length){
+       await update(ref(db,roomPath('meta')),{status:'lobby',launchId:null,roundAt:null});
+       await sendEvent({type:'toast',text:`START CANCELLED · ${loaded.length}/${ids.length} LOADED`});
+       notice(`Start cancelled: only ${loaded.length}/${ids.length} players loaded. Ask everyone to stay on the lobby screen and try again.`);
+     }
+   }catch(err){console.warn('Launch timeout check failed',err)}
+ },9000);
+}
+function enterLobby(){
+ setScreen('lobby');$('roomCode').textContent=room;notice('');
+ onDisconnect(ref(db,roomPath(`players/${uid}`))).remove();
+ onDisconnect(ref(db,roomPath(`state/${uid}`))).remove();
+ if(roomUnsub)roomUnsub();
+ roomUnsub=onValue(ref(db,roomPath()),async snap=>{
+  if(!snap.exists()){notice('This party no longer exists.');setTimeout(()=>location.reload(),1200);return}
+  roomData=snap.val();isHost=roomData.meta?.host===uid;
+  // Host recovery: if the old host disappeared, the lowest UID still in the room claims host.
+  const ids=Object.keys(roomData.players||{}).sort();
+  const hostPresent=!!roomData.players?.[roomData.meta?.host];
+  if(!hostPresent&&ids[0]===uid){
+    try{
+      await runTransaction(ref(db,roomPath('meta/host')),cur=>{
+        const stillPresent=roomData?.players?.[cur];return stillPresent?cur:uid;
+      });
+    }catch(err){console.warn('Host recovery failed',err)}
+  }
+  mode=roomData.meta?.mode||'bumper';targetWins=roomData.meta?.targetWins||3;round=roomData.meta?.round||1;
+  renderLobby();
+  if(roomData.meta?.status==='starting'&&!inGame){
+    await acknowledgeLaunch();
+    if(isHost)await maybeCommitLaunch();
+  }
+  if(roomData.meta?.status==='playing'&&!inGame){
+    clearTimeout(launchTimeout);
+    const launchId=roomData.meta?.launchId;
+    const myLoaded=roomData.players?.[uid]?.loadedLaunch;
+    const st=roomData.state?.[uid];
+    if(launchId&&myLoaded===launchId&&st){startClientGame()}
+    else notice('The match started before this client finished loading. Re-syncing…','ok');
+  }
+  if(roomData.meta?.status==='ended'&&inGame){
+    inGame=false;toast('MATCH OVER',2200);
+    setTimeout(()=>{stopGame();setScreen('lobby')},2200)
+  }
+ },err=>notice(friendlyError(err,'Room listener')));
+}
+function renderLobby(){
+ const p=roomData?.players||{}, ids=Object.keys(p);
+ $('lobbyMode').textContent=mode.toUpperCase().replace('_',' ');
+ $('modeSelect').value=mode;$('roundsSelect').value=String(targetWins);
+ $('modeSelect').disabled=!isHost;$('roundsSelect').disabled=!isHost;
+ $('startBtn').style.display=isHost?'inline-block':'none';
+ $('lobbyPlayers').innerHTML=ids.map(id=>{
+   const x=p[id];return `<div class="playerCard"><span><b style="color:${x.color||'#fff'}">●</b> ${escapeHtml(x.name||'Player')}${id===roomData.meta.host?' <span class="badge">HOST</span>':''}</span><span class="${x.ready?'ready':'wait'}">${x.ready?'READY':'WAITING'}</span></div>`
+ }).join('');
+ $('scoreStrip').innerHTML=ids.map(id=>`<span class="scoreChip" style="border-color:${p[id].color||'#fff'}55">${escapeHtml(p[id].name||'Player')}: ${p[id].score||0}</span>`).join('');
+ const allReady=ids.length>=2&&ids.every(id=>p[id].ready);
+ const ended=roomData.meta?.status==='ended',starting=roomData.meta?.status==='starting';
+ $('startBtn').textContent=starting?'LOADING…':(ended?'REMATCH':'START');
+ $('startBtn').disabled=!allReady||starting;
+ if(starting){const lid=roomData.meta?.launchId,loaded=ids.filter(id=>p[id]?.loadedLaunch===lid).length;$('lobbyHint').textContent=`Loading players ${loaded}/${ids.length}…`;}
+ else $('lobbyHint').textContent=ids.length<2?'Need at least 2 players.':allReady?'Everyone is ready.':'Waiting for all players to ready up.';
+ $('readyBtn').textContent=p[uid]?.ready?'UNREADY':'READY';
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('copyCodeBtn').onclick=async()=>{
+ try{await navigator.clipboard.writeText(room);$('copyCodeBtn').textContent='COPIED!';setTimeout(()=>$('copyCodeBtn').textContent='COPY',1000)}
+ catch(_){prompt('Copy room code:',room)}
+};
+$('readyBtn').onclick=()=>{const p=roomData?.players?.[uid];if(p)update(ref(db,roomPath(`players/${uid}`)),{ready:!p.ready})};
+$('modeSelect').onchange=()=>{if(isHost)update(ref(db,roomPath('meta')),{mode:$('modeSelect').value})};
+$('roundsSelect').onchange=()=>{if(isHost)update(ref(db,roomPath('meta')),{targetWins:+$('roundsSelect').value})};
+$('startBtn').onclick=async()=>{
+ if(!isHost||launchPending)return;
+ const ids=Object.keys(roomData.players||{}); if(ids.length<2)return;
+ const btn=$('startBtn');btn.dataset.base=btn.textContent;busy(btn,true);launchPending=true;
+ try{
+   roundResolving=false;
+   const isRematch=roomData.meta?.status==='ended';
+   const launchId=`L_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+   activeLaunchId=launchId;
+   const upd={'meta/status':'starting','meta/round':1,'meta/winner':null,'meta/roundSeed':Math.floor(Math.random()*1e9),'meta/launchId':launchId,'meta/roundAt':null,'events':null};
+   ids.forEach((id,i)=>{
+     const a=i*Math.PI*2/ids.length-Math.PI/2,score=isRematch?0:(roomData.players?.[id]?.score||0);
+     upd[`state/${id}`]={x:CX+Math.cos(a)*310,y:CY+Math.sin(a)*310,vx:0,vy:0,alive:true,score};
+     upd[`players/${id}/loadedLaunch`]=null;
+     if(isRematch)upd[`players/${id}/score`]=0;
+   });
+   // Wait for the server to accept the launch before allowing the host to acknowledge it.
+   await update(ref(db,roomPath()),upd);
+   const verify=await get(ref(db,roomPath('meta')));
+   const vm=verify.val()||{};
+   if(vm.status!=='starting'||vm.launchId!==launchId)throw new Error('Firebase did not commit the launch state.');
+   launchPending=false;
+   // Use a fresh server snapshot so the host does not rely on its optimistic local event.
+   const fresh=await get(ref(db,roomPath()));
+   if(fresh.exists())roomData=fresh.val();
+   renderLobby();
+   await acknowledgeLaunch();
+   await maybeCommitLaunch();
+   armLaunchTimeout(launchId);
+ }catch(err){
+   launchPending=false;notice(err?.code?friendlyError(err,'Start Match'):String(err.message||err));
+   try{await update(ref(db,roomPath('meta')),{status:'lobby',launchId:null,roundAt:null})}catch(_){}
+ }finally{busy(btn,false)}
+};
+$('leaveBtn').onclick=async()=>{
+ try{
+   if(room&&uid&&roomData?.players?.[uid]){
+     if(isHost){
+       const others=Object.keys(roomData.players||{}).filter(id=>id!==uid).sort();
+       if(others.length)await update(ref(db,roomPath('meta')),{host:others[0]});
+       else {await remove(ref(db,roomPath()));location.reload();return}
+     }
+     await remove(ref(db,roomPath(`players/${uid}`)));
+     try{await remove(ref(db,roomPath(`state/${uid}`)))}catch(_){}
+   }
+ }catch(err){console.warn('Leave failed',err)}
+ location.reload();
+};
+
+function startClientGame(){
+ const launchId=roomData?.meta?.launchId, st0=roomData?.state?.[uid];
+ if(!st0||!launchId||roomData?.players?.[uid]?.loadedLaunch!==launchId){notice('Could not enter match: spawn handshake incomplete.');return}
+ notice('');
+ inGame=true;roundResolving=false;loopToken++;lastT=performance.now();setScreen('none');$('game').style.display='block';$('hud').style.display='block';
+ const s=roomData.state?.[uid]||{};Object.assign(me,{x:s.x??CX,y:s.y??CY,vx:0,vy:0,alive:true,score:s.score||0,color:roomData.players?.[uid]?.color||colorFor(uid)});
+ roundStart=roomData.meta.roundAt||Date.now()+2000;roundLocked=true;spinnerA=0;shockPads=[];
+ setupEvents();toast('GET READY',1400);
+ const myToken=loopToken;requestAnimationFrame(t=>loop(t,myToken));
+}
+function stopGame(){
+ loopToken++;$('game').style.display='none';$('hud').style.display='none';roundResolving=false;
+ if(stateUnsub){stateUnsub();stateUnsub=null}
+ if(eventsUnsub){eventsUnsub();eventsUnsub=null}
+}
+
+function setupEvents(){
+ rem={};
+ if(stateUnsub)stateUnsub();if(eventsUnsub)eventsUnsub();
+ const states=ref(db,roomPath('state'));
+ stateUnsub=onValue(states,snap=>{
+   const st=snap.val()||{};
+   for(const id in st){
+     if(id===uid)continue;
+     if(!rem[id])rem[id]={x:st[id].x,y:st[id].y,tx:st[id].x,ty:st[id].y,vx:0,vy:0,alive:st[id].alive!==false,score:st[id].score||0};
+     rem[id].tx=st[id].x;rem[id].ty=st[id].y;rem[id].alive=st[id].alive!==false;rem[id].score=st[id].score||0;
+   }
+   for(const id in rem)if(!st[id])delete rem[id];
+ });
+ eventsUnsub=onChildAdded(ref(db,roomPath('events')),snap=>{
+   const e=snap.val(); if(!e)return;
+   if(e.type==='hit'&&e.target===uid&&me.alive){
+     me.vx+=e.ix||0;me.vy+=e.iy||0;flash('#ff4d8d');
+   }else if(e.type==='roundReset'){
+     const s=e.spawns?.[uid];if(s){me.x=s.x;me.y=s.y;me.vx=0;me.vy=0;me.alive=true;roundLocked=true;roundStart=e.startAt}
+   }else if(e.type==='toast')toast(e.text||'',1400);
+ });
+}
+
+async function sendEvent(e){if(!room)return;await push(ref(db,roomPath('events')),{...e,by:uid,t:Date.now()})}
+function dash(){
+ if(!me.alive||roundLocked||me.dashCd>0)return;
+ let dx=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0);
+ let dy=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
+ if(MOBILE){dx=joy.x;dy=joy.y}
+ let d=Math.hypot(dx,dy);if(d<.1){dx=1;dy=0;d=1}
+ dx/=d;dy/=d;me.vx+=dx*620;me.vy+=dy*620;me.dashCd=1.45;flash('#5ee7ff');
+}
+function flash(c){cvs.style.boxShadow=`inset 0 0 70px ${c}`;setTimeout(()=>cvs.style.boxShadow='',90)}
+
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();dash()}if(e.key==='Shift')me.brake=true});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;if(e.key==='Shift')me.brake=false});
+$('dashBtn').addEventListener('pointerdown',e=>{e.preventDefault();dash()});
+$('brakeBtn').addEventListener('pointerdown',()=>me.brake=true);$('brakeBtn').addEventListener('pointerup',()=>me.brake=false);$('brakeBtn').addEventListener('pointercancel',()=>me.brake=false);
+
+const j=$('moveJoy'),k=$('moveKnob');
+function joyMove(e){
+ const r=j.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+ let dx=e.clientX-cx,dy=e.clientY-cy,d=Math.hypot(dx,dy),m=r.width*.35;if(d>m){dx=dx/d*m;dy=dy/d*m}
+ joy.x=dx/m;joy.y=dy/m;k.style.transform=`translate(${dx}px,${dy}px)`;
+}
+j.addEventListener('pointerdown',e=>{joy.id=e.pointerId;j.setPointerCapture(e.pointerId);joyMove(e)});
+j.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)joyMove(e)});
+j.addEventListener('pointerup',e=>{if(e.pointerId===joy.id){joy.id=null;joy.x=joy.y=0;k.style.transform=''}});
+j.addEventListener('pointercancel',()=>{joy.id=null;joy.x=joy.y=0;k.style.transform=''});
+
+function worldToScreen(x,y){
+ const scale=Math.min(innerWidth/(W*.84),innerHeight/(H*.84));
+ return {x:innerWidth/2+(x-CX)*scale,y:innerHeight/2+(y-CY)*scale,s:scale};
+}
+function draw(){
+ ctx.clearRect(0,0,innerWidth,innerHeight);
+ const sc=worldToScreen(CX,CY).s, center=worldToScreen(CX,CY);
+ ctx.fillStyle='#060812';ctx.fillRect(0,0,innerWidth,innerHeight);
+ // arena
+ ctx.save();ctx.translate(center.x,center.y);
+ ctx.beginPath();ctx.arc(0,0,ARENA_R*sc,0,Math.PI*2);
+ const g=ctx.createRadialGradient(0,0,50*sc,0,0,ARENA_R*sc);g.addColorStop(0,'#182346');g.addColorStop(1,'#0b1020');
+ ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(94,231,255,.35)';ctx.lineWidth=4;ctx.stroke();
+ // hazard rings
+ ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
+ for(let r=120;r<450;r+=95){ctx.beginPath();ctx.arc(0,0,r*sc,0,Math.PI*2);ctx.stroke()}
+ ctx.restore();
+
+ if(mode==='spinner'){
+   const len=420*sc,w=12*sc;
+   ctx.save();ctx.translate(center.x,center.y);ctx.rotate(spinnerA);
+   ctx.fillStyle='rgba(255,77,141,.18)';ctx.fillRect(-len,-w*2,len*2,w*4);
+   ctx.fillStyle='#ff4d8d';ctx.fillRect(-len,-w/2,len*2,w);ctx.restore();
+ }
+ if(mode==='chaos'){
+   for(const p of shockPads){
+     const q=worldToScreen(p.x,p.y);ctx.beginPath();ctx.arc(q.x,q.y,p.r*sc,0,Math.PI*2);
+     ctx.fillStyle=`rgba(255,209,102,${.12+.15*Math.sin(performance.now()/120+p.phase)})`;ctx.fill();
+     ctx.strokeStyle='#ffd166';ctx.setLineDash([6,6]);ctx.stroke();ctx.setLineDash([]);
+   }
+ }
+ for(const id in rem){const p=rem[id];if(p.alive)drawPlayer(p.x,p.y,roomData.players?.[id]?.color||colorFor(id),roomData.players?.[id]?.name||'Player')}
+ if(me.alive)drawPlayer(me.x,me.y,me.color,me.name,true);
+}
+function drawPlayer(x,y,c,n,self=false){
+ const p=worldToScreen(x,y),r=me.r*p.s;
+ ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();
+ ctx.lineWidth=self?4:2;ctx.strokeStyle=self?'#fff':'rgba(255,255,255,.5)';ctx.stroke();
+ ctx.fillStyle='#fff';ctx.font='700 12px system-ui';ctx.textAlign='center';ctx.fillText(n,p.x,p.y-r-8);
+}
+function modeHazards(dt){
+ if(mode==='spinner'){
+   spinnerA+=dt*(.8+Math.min(1.7,(Date.now()-roundStart)/22000));
+   if(me.alive&&!roundLocked){
+     const dx=me.x-CX,dy=me.y-CY;
+     const ax=Math.cos(spinnerA),ay=Math.sin(spinnerA);
+     const along=dx*ax+dy*ay, perp=Math.abs(-ay*dx+ax*dy);
+     if(Math.abs(along)<430&&perp<22){
+       const side=Math.sign(-ay*dx+ax*dy)||1;me.vx+=(-ay*side)*1100*dt;me.vy+=(ax*side)*1100*dt;
+     }
+   }
+ }
+ if(mode==='chaos'&&isHost&&shockPads.length===0){
+   for(let i=0;i<5;i++){const a=i*Math.PI*2/5+.4,r=170+(i%2)*110;shockPads.push({x:CX+Math.cos(a)*r,y:CY+Math.sin(a)*r,r:62,phase:i})}
+ }
+ if(mode==='chaos'&&me.alive&&!roundLocked){
+   for(const p of shockPads){
+     if(Math.hypot(me.x-p.x,me.y-p.y)<p.r && Math.sin(performance.now()/350+p.phase)>.88){
+       const a=Math.atan2(me.y-p.y,me.x-p.x);me.vx+=Math.cos(a)*18;me.vy+=Math.sin(a)*18;
+     }
+   }
+ }
+}
+function physics(dt){
+ if(!me.alive)return;
+ if(Date.now()<roundStart){roundLocked=true}else if(roundLocked){roundLocked=false;toast('GO!',700)}
+ let mx=((keys['d']||keys['arrowright'])?1:0)-((keys['a']||keys['arrowleft'])?1:0);
+ let my=((keys['s']||keys['arrowdown'])?1:0)-((keys['w']||keys['arrowup'])?1:0);
+ if(MOBILE){mx=joy.x;my=joy.y}
+ const m=Math.hypot(mx,my);if(m>1){mx/=m;my/=m}
+ if(!roundLocked){me.vx+=mx*780*dt;me.vy+=my*780*dt}
+ const drag=me.brake?.84:.94;me.vx*=Math.pow(drag,dt*60);me.vy*=Math.pow(drag,dt*60);
+ const max=me.brake?280:520,sp=Math.hypot(me.vx,me.vy);if(sp>max){me.vx=me.vx/sp*max;me.vy=me.vy/sp*max}
+ me.x+=me.vx*dt;me.y+=me.vy*dt;me.dashCd=Math.max(0,me.dashCd-dt);
+
+ // remote collision / dash bump
+ for(const id in rem){
+   const p=rem[id];if(!p.alive)continue;
+   p.x+=(p.tx-p.x)*Math.min(1,dt*10);p.y+=(p.ty-p.y)*Math.min(1,dt*10);
+   const dx=p.x-me.x,dy=p.y-me.y,d=Math.hypot(dx,dy),min=me.r*2;
+   if(d>0&&d<min){
+     const nx=dx/d,ny=dy/d,rel=me.vx*nx+me.vy*ny;
+     me.x-=nx*(min-d)*.5;me.y-=ny*(min-d)*.5;
+     if(rel>120&&!roundLocked){
+       const now=performance.now(),last=hitGate.get(id)||0;
+       if(now-last>220){
+         hitGate.set(id,now);
+         const power=Math.min(900,280+rel*1.2);
+         sendEvent({type:'hit',target:id,ix:nx*power,iy:ny*power});
+         me.vx-=nx*170;me.vy-=ny*170;
+       }
+     }
+   }
+ }
+ const dc=Math.hypot(me.x-CX,me.y-CY);
+ if(dc>ARENA_R+me.r&&!roundLocked){
+   me.alive=false;me.vx=me.vy=0;toast('OUT!',900);
+   update(ref(db,roomPath(`state/${uid}`)),{alive:false,x:me.x,y:me.y,vx:0,vy:0});
+ }
+}
+async function hostRoundCheck(){
+ if(!isHost||!inGame||roundLocked||roundResolving||roomData?.meta?.status!=='playing')return;
+ if(Date.now()<(roomData?.meta?.roundAt||0)+700)return;
+ const s=await get(ref(db,roomPath('state'))),st=s.val()||{};
+ const roster=Object.keys(roomData?.players||{});
+ if(roster.length<2||roster.some(id=>!st[id]))return;
+ const alive=roster.filter(id=>st[id].alive!==false);
+ if(alive.length>1)return;
+ roundResolving=true;
+ if(alive.length===1){
+   const win=alive[0],newScore=(st[win].score||0)+1;
+   await update(ref(db,roomPath(`state/${win}`)),{score:newScore});
+   await update(ref(db,roomPath(`players/${win}`)),{score:newScore});
+   await sendEvent({type:'toast',text:`${roomData.players?.[win]?.name||'PLAYER'} WINS ROUND`});
+   if(newScore>=targetWins){await update(ref(db,roomPath('meta')),{status:'ended',winner:win});return}
+ }
+ setTimeout(()=>hostResetRound(),1600);
+}
+async function hostResetRound(){
+ if(!isHost||!inGame){roundResolving=false;return}
+ const ids=Object.keys(roomData.players||{}),spawns={};ids.forEach((id,i)=>{const a=i*Math.PI*2/ids.length-Math.PI/2;spawns[id]={x:CX+Math.cos(a)*310,y:CY+Math.sin(a)*310}});
+ const startAt=Date.now()+2200;
+ const upd={'meta/round':(roomData.meta.round||1)+1,'meta/roundAt':startAt};
+ ids.forEach(id=>upd[`state/${id}`]={...spawns[id],vx:0,vy:0,alive:true,score:roomData.players[id].score||0});
+ try{
+   await update(ref(db,roomPath()),upd);
+   await sendEvent({type:'roundReset',spawns,startAt});
+ }finally{roundResolving=false}
+}
+let hostCheckT=0;
+function sync(now){
+ if(!room||!inGame)return;
+ if(now-lastSync>80){
+   lastSync=now;update(ref(db,roomPath(`state/${uid}`)),{x:Math.round(me.x),y:Math.round(me.y),vx:Math.round(me.vx),vy:Math.round(me.vy),alive:me.alive,score:me.score});
+ }
+ if(isHost&&now-hostCheckT>700){hostCheckT=now;hostRoundCheck()}
+}
+function hud(){
+ $('roundText').textContent=`ROUND ${roomData?.meta?.round||1}`;
+ $('modeText').textContent=(roomData?.meta?.mode||mode).toUpperCase();
+ const localAlive=me.alive?1:0, ra=Object.values(rem).filter(p=>p.alive).length;
+ $('aliveText').textContent=`${localAlive+ra} ALIVE`;
+}
+function loop(now,token){
+ if(!inGame||token!==loopToken)return;
+ const dt=Math.min(.033,(now-lastT)/1000||.016);lastT=now;
+ mode=roomData?.meta?.mode||mode;roundStart=roomData?.meta?.roundAt||roundStart;
+ modeHazards(dt);physics(dt);sync(Date.now());draw();hud();
+ requestAnimationFrame(t=>loop(t,token));
+}
+</script>
+</body></html>
