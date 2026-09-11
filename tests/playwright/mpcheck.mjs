@@ -1,0 +1,30 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 900, height: 480 } });
+let dialogs = 0;
+page.on('dialog', async d => { dialogs++; await d.dismiss(); });
+await page.goto('http://127.0.0.1:8077/index.html', { waitUntil: 'load' });
+await page.waitForSelector('#screen-menu:not(.hidden)');
+// 1) connect to a dead server → in-modal error, no browser dialog
+await page.click('#btn-multiplayer');
+await page.waitForSelector('#mp-modal:not(.hidden)');
+await page.fill('#mp-url', 'ws://127.0.0.1:9/ws');
+await page.click('#mp-connect');
+await page.waitForTimeout(1500);
+const err = await page.textContent('#mp-error');
+const modalShown = await page.evaluate(() => !document.getElementById('mp-modal').classList.contains('hidden'));
+// 2) cancel → PLAY vs bots: no dialogs, straight into a match
+await page.click('#mp-cancel');
+await page.click('#btn-play');
+await page.waitForSelector('#screen-role:not(.hidden)');
+await page.click('.role-card:nth-child(2)');
+await page.click('#btn-role-next');
+await page.waitForSelector('#screen-hero:not(.hidden)');
+await page.click('.hero-card:nth-child(1)');
+await page.click('#btn-hero-lock');
+await page.waitForSelector('#screen-match:not(.hidden)', { timeout: 10000 });
+await page.waitForTimeout(1500);
+const simLocal = await page.evaluate(() => !!window.__LA.driver.sim);
+console.log(JSON.stringify({ dialogs, modalShown, err: err.trim().slice(0, 60), botsMatchStarted: simLocal }));
+await browser.close();
+process.exit(dialogs === 0 && modalShown && simLocal ? 0 : 1);
