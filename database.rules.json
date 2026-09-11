@@ -1,0 +1,36 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "presence": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "queue": {
+      ".read": "auth != null",
+      ".indexOn": ["at"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "matches": {
+      ".read": "auth != null",
+      "$matchId": {
+        ".write": "auth != null && (!data.exists() || data.child('state').val() !== 'done')",
+        ".validate": true
+      }
+    },
+
+    "results": {
+      ".read": "auth != null",
+      "$matchId": {
+        ".write": "auth != null && !data.exists()"
+      }
+    }
+  }
+}
